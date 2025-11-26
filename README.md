@@ -67,5 +67,5 @@ Chim-eTunes recommends songs, playlists, or artists that align with a user’s m
 ## Possible Datasets
 **Public Spotify Dataset:**  
 [Spotify Music Dataset on Kaggle](https://www.kaggle.com/datasets/solomonameh/spotify-music-dataset)
-
+https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset
 
