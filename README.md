@@ -45,16 +45,31 @@ Chim-eTunes recommends songs, playlists, or artists that align with a user’s m
 
 ### Flow
 
-[User Input]  
-⬇️  
-[Text Processing / Mood Analysis]  
-⬇️  
-[Recommendation Engine]  
-⬇️  
-[Music Database]  
-⬇️  
-[Chatbot Response]
+<img width="480" height="673" alt="image" src="https://github.com/user-attachments/assets/f4d2b295-faf9-4298-853b-358d4f67c9af" />
 
+
+### Processing Flow
+
+1. *Input Processing*
+   - User enters natural language query
+   - Text sent to Groq LLM for intent parsing
+   - Extracts: intent type, entities (artist, genre, mood), parameters
+
+2. *Recommendation Generation*
+   - Query converted to embedding vector (384-dim)
+   - Cosine similarity computed against 85K+ track embeddings
+   - Results filtered by constraints (artist, audio features)
+   - Top matches ranked and returned
+
+3. *Response Formatting*
+   - Recommendations formatted as conversational text
+   - Track details displayed with audio features
+   - Playlist actions executed via Spotify API
+
+4. *UI Update*
+   - Chat interface updated with bot response
+   - Typing indicator shown during processing
+   - Theme-aware color coding for messages
 ### Steps
 1. **User Input** — User provides input such as mood, genre, or favorite artist.  
 2. **Text Processing / NLP** — Extracts mood, genre, and artist preferences using natural language processing.  
