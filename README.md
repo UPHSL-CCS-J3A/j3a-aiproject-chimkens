@@ -35,7 +35,7 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 
 | **Component** | **Description** |
 |----------------|-----------------|
-| **Performance Measure** |• User satisfaction, engagement (clicks, listens, likes), and positive interactions (e.g., adding to playlists).<br> • Recommendation accuracy (semantic similarity scores).<br>• User satisfaction (successful playlist additions).<br>• Response relevance (intent parsing accuracy).<br>• System responsiveness (query processing time). |
+| **Performance Measure** |• User satisfaction and positive interactions (e.g., adding to playlists).<br> • Recommendation accuracy (semantic similarity scores).<br>• User satisfaction (successful playlist additions).<br>• Response relevance (intent parsing accuracy).<br>• System responsiveness (query processing time). |
 | **Environment** |• *Virtual*: a chat-based interface connected to a music database or streaming service. Desktop application with GUI.<br>• *Data-Driven*: 85,000+ track database with embeddings.<br>• *API-Connected*: Spotify Web API for playlist management<br>• *User Context*: Chat history, preferences, session data. |
 | **Actuators** |• Sends text-based recommendations for songs, playlists, or artists.<br>• Display text-based recommendations.<br>• Create/modify Spotify playlists.<br>• Show track details and audio features.<br>• Update UI elements (typing indicators, theme switching). | |
 | **Sensors** |• Collects user inputs such as text messages, moods, favorite genres, listening history, and ratings.<br>• User text input (natural language queries).<br>• Spotify authentication state.<br>• Local music library metadata.<br>• Audio feature data (valence, energy, danceability, etc.).<br>• User interaction history. |
