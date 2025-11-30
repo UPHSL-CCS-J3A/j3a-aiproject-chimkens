@@ -7,16 +7,27 @@ With millions of songs available on streaming platforms, users often struggle to
 
 ---
 
-## Problem Description
-Finding new music that fits a listener’s unique taste can be difficult due to the massive volume of available songs. Users spend excessive time browsing playlists or searching manually, which reduces enjoyment and discovery potential.
+## 🎯 Problem Description
+
+With millions of songs available on streaming platforms, users face significant challenges:
+- *Information Overload*: Overwhelming volume of available music makes discovery difficult
+- *Time-Consuming Search*: Manual browsing through playlists and catalogs is inefficient
+- *Limited Personalization*: Generic recommendations don't account for nuanced preferences (mood, context, specific artists)
+- *Poor User Experience*: Lack of conversational, intuitive interfaces for music discovery
+
+These issues lead to reduced user engagement, missed discovery opportunities, and overall dissatisfaction with music streaming experiences.
 
 ---
 
-## Proposed Solution
-Chim-eTunes recommends songs, playlists, or artists that align with a user’s mood and taste. Through natural conversation, it helps users:
-- Discover new music effortlessly  
-- Get recommendations based on mood, genre, or favorite artists  
-- Stay engaged through personalized and interactive responses  
+## 💡 Proposed Solution
+
+*Chim-eTunes* is an intelligent desktop application that provides *personalized music recommendations* through a natural, conversational chat interface. The system:
+
+- 🎵 *Understands Natural Language*: Processes complex queries like "sad songs by Adele" or "upbeat K-pop for workouts"
+- 🧠 *Semantic Search*: Uses AI embeddings to find music based on meaning, not just keywords
+- 🎨 *Mood-Aware Recommendations*: Analyzes audio features (valence, energy, tempo) to match emotional context
+- 📊 *Hybrid Architecture*: Combines local library intelligence with Spotify API integration
+- 🎭 *Conversational AI*: Powered by Groq LLM for natural, context-aware interactions
 
 ---
 
