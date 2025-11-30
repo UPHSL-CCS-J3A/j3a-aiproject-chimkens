@@ -35,7 +35,7 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 
 | **Component** | **Description** |
 |----------------|-----------------|
-| **Performance Measure** | User satisfaction, engagement (clicks, listens, likes), and positive interactions (e.g., adding to playlists). |
+| **Performance Measure** | User satisfaction, engagement (clicks, listens, likes), and positive interactions (e.g., adding to playlists). • Recommendation accuracy (semantic similarity scores)<br>• User satisfaction (successful playlist additions)<br>• Response relevance (intent parsing accuracy)<br>• System responsiveness (query processing time) | |
 | **Environment** | Virtual — a chat-based interface connected to a music database or streaming service. |
 | **Actuators** | Sends text-based recommendations for songs, playlists, or artists. |
 | **Sensors** | Collects user inputs such as text messages, moods, favorite genres, listening history, and ratings. |
