@@ -81,12 +81,6 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
    - Chat interface updated with bot response
    - Typing indicator shown during processing
    - Theme-aware color coding for messages
-### Steps
-1. **User Input** — User provides input such as mood, genre, or favorite artist.  
-2. **Text Processing / NLP** — Extracts mood, genre, and artist preferences using natural language processing.  
-3. **Recommendation Engine** — Matches user preferences with the song database using filtering algorithms.  
-4. **Music Database** — Stores songs and metadata (artist, genre, mood, tempo, etc.).  
-5. **Chatbot Response** — Sends personalized music recommendations back to the user.
 
 ---
 
