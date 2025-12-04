@@ -1,0 +1,35 @@
+# Chim-eTunes Dependencies
+# Install all dependencies with: pip install -r requirements.txt
+
+# GUI Framework
+customtkinter>=5.2.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# Spotify API
+spotipy>=2.23.0
+
+# AI/LLM
+groq>=0.4.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Data Processing (for local library)
+pandas>=2.0.0
+numpy>=1.24.0
+pyarrow>=14.0.0  # For Parquet file support
+
+# Machine Learning (for embeddings/recommendations)
+scikit-learn>=1.3.0
+sentence-transformers>=2.2.0
+
+# HTTP Requests (for image downloads)
+requests>=2.31.0
+
+# Progress Bars
+tqdm>=4.66.0
+
+# PyInstaller (for building executable)
+pyinstaller>=6.0.0
