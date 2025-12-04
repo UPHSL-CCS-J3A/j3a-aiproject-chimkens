@@ -84,7 +84,7 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 
 ---
 
-## Possible Datasets
+## Datasets Used
 **Public Spotify Dataset:**  
 - [Spotify Music Dataset on Kaggle](https://www.kaggle.com/datasets/solomonameh/spotify-music-dataset) 
 - https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset
