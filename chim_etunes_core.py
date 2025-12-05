@@ -43,6 +43,7 @@ def get_sp_oauth():
         open_browser=True # Allow auto-opening browser for login
     )
 
+# Gets playlist ID from link
 def parse_playlist_id(link):
     if not link: return None
     m = re.search(r"playlist/([A-Za-z0-9]+)", link)
@@ -1324,3 +1325,4 @@ class ChatBot:
             return f"Found {seed_track}, but couldn't get details from Spotify right now. (API Error)", []
 
     
+
