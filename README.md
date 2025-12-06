@@ -89,4 +89,5 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 - [Spotify Music Dataset on Kaggle](https://www.kaggle.com/datasets/solomonameh/spotify-music-dataset) 
 - https://huggingface.co/datasets/maharshipandya/spotify-tracks-dataset
 - https://drive.google.com/drive/folders/1l5mQLOQwb6DREUV7MmpyITWKoUSqz8-p?usp=drive_link
+- https://www.canva.com/design/DAG6Q5MZ0hM/F93Usbp8sW6pgxYP558YHg/edit?utm_content=DAG6Q5MZ0hM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 
