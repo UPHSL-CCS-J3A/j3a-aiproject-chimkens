@@ -24,9 +24,9 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 print("Loading datasets...")
 # Load all CSV files from datasets folder
 dataset_files = [
-    'datasets/high_popularity_spotify_data.csv',
-    'datasets/low_popularity_spotify_data.csv',
-    'datasets/spotify_dataset.csv'
+    '../data/high_popularity_spotify_data.csv',
+    '../data/low_popularity_spotify_data.csv',
+    '../data/spotify_dataset.csv'
 ]
 
 dfs = []
@@ -39,7 +39,7 @@ for file in dataset_files:
         print(f"  Warning: {file} not found, skipping...")
 
 if not dfs:
-    print("ERROR: No datasets found! Make sure CSV files are in the 'datasets/' folder.")
+    print("ERROR: No datasets found! Make sure CSV files are in the '../data/' folder.")
     exit(1)
 
 # Combine all datasets
@@ -268,7 +268,7 @@ output_data = {
     'audio_weight': audio_weight
 }
 
-output_file = 'datasets/embeddings.pkl'
+output_file = '../data/embeddings.pkl'
 print(f"\nSaving embeddings to {output_file}...")
 with open(output_file, 'wb') as f:
     pickle.dump(output_data, f)

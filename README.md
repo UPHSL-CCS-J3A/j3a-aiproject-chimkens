@@ -91,3 +91,31 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 - https://drive.google.com/drive/folders/1l5mQLOQwb6DREUV7MmpyITWKoUSqz8-p?usp=drive_link
 - https://www.canva.com/design/DAG6Q5MZ0hM/F93Usbp8sW6pgxYP558YHg/edit?utm_content=DAG6Q5MZ0hM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 
+---
+
+## 🚀 How to Run
+
+### 1. Prerequisites
+- Python 3.9+
+- A `.env` file in the root directory containing your API keys:
+  ```env
+  GROQ_API_KEY=your_groq_key
+  SPOTIPY_CLIENT_ID=your_spotify_id
+  SPOTIPY_CLIENT_SECRET=your_spotify_secret
+  SPOTIPY_REDIRECT_URI=http://127.0.0.1:3000/callback
+  ```
+
+### 2. Setup
+1. Clone this repository.
+2. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Make sure you have placed the necessary `high_popularity_spotify_data.parquet`, `low_popularity_spotify_data.parquet`, and `spotify_dataset.parquet` files into the `data/` directory.
+
+### 3. Execution
+To launch the application, **run from the root directory**:
+```bash
+python main.py
+```
+

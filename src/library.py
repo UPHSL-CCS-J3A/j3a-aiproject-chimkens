@@ -96,21 +96,21 @@ class LocalMusicLibrary:
         try:
             # Try Parquet first (faster), fallback to CSV
             parquet_files = [
-                'datasets/high_popularity_spotify_data.parquet',
-                'datasets/low_popularity_spotify_data.parquet',
-                'datasets/spotify_dataset.parquet'
+                'data/high_popularity_spotify_data.parquet',
+                'data/low_popularity_spotify_data.parquet',
+                'data/spotify_dataset.parquet'
             ]
             
             csv_files = [
-                'datasets/high_popularity_spotify_data.csv',
-                'datasets/low_popularity_spotify_data.csv',
-                'datasets/spotify_dataset.csv'
+                'data/high_popularity_spotify_data.csv',
+                'data/low_popularity_spotify_data.csv',
+                'data/spotify_dataset.csv'
             ]
             
             # Fallback to root folder if datasets folder doesn't exist
             if not any(os.path.exists(f) for f in parquet_files + csv_files):
-                parquet_files = [f.replace('datasets/', '') for f in parquet_files]
-                csv_files = [f.replace('datasets/', '') for f in csv_files]
+                parquet_files = [f.replace('data/', '') for f in parquet_files]
+                csv_files = [f.replace('data/', '') for f in csv_files]
             
             dfs = []
             
@@ -214,7 +214,7 @@ class LocalMusicLibrary:
     def _load_embeddings(self):
         """Load pre-computed embeddings if available"""
         try:
-            embedding_file = 'datasets/embeddings.pkl'
+            embedding_file = 'data/embeddings.pkl'
             if not os.path.exists(embedding_file):
                 print("Embeddings not found. Run 'python generate_embeddings.py' to create them.")
                 print("Using basic audio feature search for now.")

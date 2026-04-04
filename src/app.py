@@ -18,7 +18,7 @@ import webbrowser
 from PIL import Image, ImageTk
 
 # Import core logic
-from chim_etunes_core import (
+from core import (
     SpotifyClient, 
     IntentParser, 
     ChatBot, 
@@ -37,7 +37,7 @@ def get_resource_path(relative_path):
 
 # Set appearance
 ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme(get_resource_path("Themes/pink.json"))
+ctk.set_default_color_theme(get_resource_path("assets/themes/pink.json"))
 
 class ChimEkenApp(ctk.CTk):
     def __init__(self):
@@ -49,7 +49,7 @@ class ChimEkenApp(ctk.CTk):
 
         # Set window icon for title bar and taskbar
         try:
-            self.iconbitmap(get_resource_path("Images/Chim-eTunes Logo.ico"))
+            self.iconbitmap(get_resource_path("assets/images/Chim-eTunes Logo.ico"))
         except:
             pass  # Fallback if icon not found
         
@@ -92,8 +92,8 @@ class ChimEkenApp(ctk.CTk):
         # Title
         try:
             logo_image = ctk.CTkImage(
-                light_image=Image.open(get_resource_path("Images/Chim-eTunes Logo.png")).resize((130, 120)),
-                dark_image=Image.open(get_resource_path("Images/Chim-eTunes Logo.png")).resize((130, 120)),
+                light_image=Image.open(get_resource_path("assets/images/Chim-eTunes Logo.png")).resize((130, 120)),
+                dark_image=Image.open(get_resource_path("assets/images/Chim-eTunes Logo.png")).resize((130, 120)),
                 size=(150, 120) 
             )
             self.logo_label = ctk.CTkLabel(self.sidebar, image=logo_image, text="")
