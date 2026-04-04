@@ -94,23 +94,27 @@ class LocalMusicLibrary:
 
     def _load_data(self):
         try:
+            # Resolve root directory dynamically
+            root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            data_dir = os.path.join(root_dir, 'data')
+            
             # Try Parquet first (faster), fallback to CSV
             parquet_files = [
-                'data/high_popularity_spotify_data.parquet',
-                'data/low_popularity_spotify_data.parquet',
-                'data/spotify_dataset.parquet'
+                os.path.join(data_dir, 'high_popularity_spotify_data.parquet'),
+                os.path.join(data_dir, 'low_popularity_spotify_data.parquet'),
+                os.path.join(data_dir, 'spotify_dataset.parquet')
             ]
             
             csv_files = [
-                'data/high_popularity_spotify_data.csv',
-                'data/low_popularity_spotify_data.csv',
-                'data/spotify_dataset.csv'
+                os.path.join(data_dir, 'high_popularity_spotify_data.csv'),
+                os.path.join(data_dir, 'low_popularity_spotify_data.csv'),
+                os.path.join(data_dir, 'spotify_dataset.csv')
             ]
             
-            # Fallback to root folder if datasets folder doesn't exist
+            # Fallback to root folder if data folder doesn't exist
             if not any(os.path.exists(f) for f in parquet_files + csv_files):
-                parquet_files = [f.replace('data/', '') for f in parquet_files]
-                csv_files = [f.replace('data/', '') for f in csv_files]
+                parquet_files = [f.replace(data_dir + os.sep, '') for f in parquet_files]
+                csv_files = [f.replace(data_dir + os.sep, '') for f in csv_files]
             
             dfs = []
             
@@ -214,7 +218,8 @@ class LocalMusicLibrary:
     def _load_embeddings(self):
         """Load pre-computed embeddings if available"""
         try:
-            embedding_file = 'data/embeddings.pkl'
+            root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            embedding_file = os.path.join(root_dir, 'data', 'embeddings.pkl')
             if not os.path.exists(embedding_file):
                 print("Embeddings not found. Run 'python generate_embeddings.py' to create them.")
                 print("Using basic audio feature search for now.")
