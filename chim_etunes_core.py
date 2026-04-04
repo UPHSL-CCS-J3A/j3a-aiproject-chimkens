@@ -133,7 +133,12 @@ IMPORTANT CONTEXT HANDLING: If the user uses pronouns or references like "that",
 
 Based on the LATEST user message (and using previous context if needed), return a JSON object with fields:
 - "intent": one of ["create_playlist", "show_playlists", "analyze_playlist", "add_to_playlist", "remove_from_playlist", "get_recommendations", "read_playlist", "get_artist_details", "get_track_details", "get_album_details", "casual_chat"]
-  * "create_playlist": when user wants to CREATE a new playlist (e.g., "create a playlist called My Vibes", "make a playlist with these songs", "create a workout playlist")
+  * "create_playlist": when user wants to CREATE a new playlist. CRITICAL: If user says "create a playlist" or "make a playlist", ALWAYS use this intent, NEVER casual_chat. Examples:
+    - "create a playlist called My Vibes" → create_playlist
+    - "make a playlist with these songs" → create_playlist
+    - "create a workout playlist" → create_playlist
+    - "create a playlist named X and add Y" → create_playlist (extract playlist_name: "X", tracks_to_add: ["Y"])
+    - "make a playlist for me named radgepogi and add cancer" → create_playlist (extract playlist_name: "radgepogi", tracks_to_add: ["cancer"])
   * "show_playlists": when user wants to see a LIST of all their playlists (e.g., "show my playlists", "list my playlists", "what playlists do I have")
   * "read_playlist": when user wants to see tracks IN a specific playlist by name OR URL (e.g., "show me my workout playlist", "read my chill playlist", "show tracks in my favorites", or provides a Spotify playlist URL/link)
   * "edit_playlist": when user wants to rename a playlist (e.g., "rename my playlist to X", "change playlist name to Y")
@@ -142,12 +147,19 @@ Based on the LATEST user message (and using previous context if needed), return 
   * "get_artist_details": ONLY when user explicitly asks for artist information/details (e.g., "tell me about adele", "who is taylor swift", "artist info for drake", "Do you know munimuni", )
   * "add_to_playlist": when user wants to ADD songs to an EXISTING playlist (e.g., "add FAKE LOVE to a playlist", "add these songs to playlist", "put this in a playlist"). ALWAYS extract this intent even without a URL - the bot will ask for the URL. Do NOT respond with casual chat about creating playlists.
     → IMPORTANT: Extract track names to "tracks_to_add" field when user mentions specific songs!
+  * "casual_chat": ONLY when user is having a general conversation NOT related to music actions. NEVER use this for playlist creation, adding songs, or any music-related action.
   * "get_album_details": when user wants to get album details (e.g., "tell me about album 'album name'", "who is taylor swift", "artist info for drake")
 - "tracks_to_remove": (array of strings) track names to remove from playlist if specified
   * "remove Hacking to the Gate" -> ["Hacking to the Gate"]
   * "remove grace by fujii kaze" -> ["grace"] (and artist: "fujii kaze")
 - "playlist_url": (string) the spotify playlist URL/URI if provided, else empty string
-- "artist": (string) artist name for adding/removing, else empty string. If user says "add them" or "add these songs", leave empty.
+- "artist": (string) artist name for adding/removing tracks. IMPORTANT: Normalize artist abbreviations to full names:
+  * "mcr" → "My Chemical Romance"
+  * "p!atd" → "Panic! at the Disco"
+  * "fob" → "Fall Out Boy"
+  * "tøp", "21 pilots" → "Twenty One Pilots"
+  * "add cancer by mcr" → tracks_to_add: ["cancer"], artist: "My Chemical Romance"
+  * If user says "add them" or "add these songs", leave empty.
 - "limit": (integer) number of songs requested. Extract from phrases like:
   * "give me 5 songs" -> 5
   * "recommend 20 tracks" -> 20
@@ -239,7 +251,7 @@ Only return valid JSON. Example:
             model="openai/gpt-oss-20b",
             messages=[{"role":"user","content":prompt}],
             temperature=0.7,
-            max_tokens=500
+            max_tokens=800
         )
         return resp.choices[0].message.content
 
@@ -324,9 +336,19 @@ class ChatBot:
         # Priority 1: Search for specific tracks if provided
         if tracks_to_add:
             for track_name in tracks_to_add:
-                res = self.sp.search(q=track_name, type="track", limit=1)
+                # Build search query using Spotify's advanced search syntax for accuracy
+                if artist:
+                    # Use explicit field matching: track:name artist:name
+                    search_query = f'track:"{track_name}" artist:"{artist}"'
+                else:
+                    search_query = f'track:"{track_name}"'
+                
+                print(f"DEBUG: Searching for: '{search_query}'")  # DEBUG
+                res = self.sp.search(q=search_query, type="track", limit=1)
                 if res['tracks']['items']:
-                    uris.append(res['tracks']['items'][0]['uri'])
+                    found_track = res['tracks']['items'][0]
+                    print(f"DEBUG: Found: '{found_track['name']}' by {found_track['artists'][0]['name']}")  # DEBUG
+                    uris.append(found_track['uri'])
 
         # Priority 2: Search by artist
         elif artist:
@@ -401,13 +423,24 @@ class ChatBot:
             if tracks_to_add or session_data.get('pending_tracks'):
                 track_list = tracks_to_add or session_data.get('pending_tracks', [])
                 for track_name in track_list:
+                    # Build search query using Spotify's advanced search syntax for accuracy
+                    if artist:
+                        # Use explicit field matching: track:name artist:name
+                        search_query = f'track:"{track_name}" artist:"{artist}"'
+                    else:
+                        search_query = f'track:"{track_name}"'
+                    
                     # Try exact search first
-                    res = self.sp.search(q=track_name, type="track", limit=1)
+                    res = self.sp.search(q=search_query, type="track", limit=1)
                     
                     # If not found, try without special characters
                     if not res['tracks']['items']:
                         simplified = track_name.replace(" - ", " ").replace(".", "")
-                        res = self.sp.search(q=simplified, type="track", limit=1)
+                        if artist:
+                            search_query = f'track:"{simplified}" artist:"{artist}"'
+                        else:
+                            search_query = f'track:"{simplified}"'
+                        res = self.sp.search(q=search_query, type="track", limit=1)
                     
                     if res['tracks']['items']:
                         uris.append(res['tracks']['items'][0]['uri'])
@@ -534,11 +567,42 @@ class ChatBot:
             res = self.local.search(search_query, limit=limit * 10)
             recs = res['tracks']['items']
             
-            # If semantic search returns poor results for mood queries, use audio features
-            if recs and 'similarity_score' in recs[0] and recs[0]['similarity_score'] < 0.45:
-                # Check if this is a mood query
+            # Check if semantic search failed or returned poor results
+            search_failed = not recs or (recs and 'similarity_score' in recs[0] and recs[0]['similarity_score'] < 0.45)
+            
+            # If semantic search returns poor results, try genre + mood filtering
+            if search_failed:
+                query_lower = search_query.lower()
+                
+                # Detect genre/nationality in the query
+                genre_map = {
+                    'k-pop': 'korean',
+                    'kpop': 'korean',
+                    'korean': 'korean',
+                    'j-pop': 'japanese',
+                    'jpop': 'japanese',
+                    'japanese': 'japanese',
+                    'c-pop': 'chinese',
+                    'cpop': 'chinese',
+                    'chinese': 'chinese',
+                    'mandarin': 'chinese',
+                    'opm': 'filipino',
+                    'filipino': 'filipino',
+                    'tagalog': 'filipino',
+                    'russian': 'russian'
+                }
+                
+                # Check if query contains a genre
+                detected_genre = None
+                for genre_keyword, genre_value in genre_map.items():
+                    if genre_keyword in query_lower:
+                        detected_genre = genre_value
+                        break
+                
+                # Define mood keywords with audio features
                 mood_keywords = {
                     'energetic': {'energy': (0.7, 1.0), 'valence': (0.5, 1.0)},
+                    'workout': {'energy': (0.7, 1.0), 'danceability': (0.6, 1.0)},
                     'happy': {'valence': (0.7, 1.0), 'energy': (0.5, 1.0)},
                     'sad': {'valence': (0.0, 0.3), 'energy': (0.0, 0.4)},
                     'calm': {'energy': (0.0, 0.4), 'valence': (0.4, 0.8)},
@@ -547,18 +611,98 @@ class ChatBot:
                     'upbeat': {'energy': (0.6, 1.0), 'valence': (0.6, 1.0)}
                 }
                 
-                query_lower = search_query.lower()
+                # Detect mood in query
+                detected_mood = None
+                mood_features = None
                 for mood, features in mood_keywords.items():
                     if mood in query_lower:
-                        # Filter by audio features
-                        filtered_df = self.local.df.copy()
-                        for feature, (min_val, max_val) in features.items():
-                            filtered_df = filtered_df[(filtered_df[feature] >= min_val) & (filtered_df[feature] <= max_val)]
-                        
-                        if not filtered_df.empty:
-                            sample = filtered_df.sample(n=min(limit * 10, len(filtered_df))) # Get more for filtering
-                            recs = self.local._to_spotify_format(sample)
+                        detected_mood = mood
+                        mood_features = features
                         break
+                
+                # If we detected a genre, use genre-based filtering
+                if detected_genre:
+                    # Get tracks from that genre using the hybrid approach
+                    from local_library import KNOWN_ARTISTS
+                    
+                    script_map = {
+                        'korean': 'korean',
+                        'japanese': 'japanese',
+                        'chinese': 'chinese',
+                        'russian': 'russian',
+                        'filipino': 'filipino'
+                    }
+                    
+                    target_script = script_map.get(detected_genre)
+                    genre_tracks = []
+                    
+                    if target_script:
+                        # Method 1: Script detection
+                        script_tracks = self.local.search_by_script(target_script, limit=limit * 10)
+                        
+                        # Method 2: Known artists
+                        artist_tracks = []
+                        script_to_genre = {
+                            'korean': 'k-pop',
+                            'japanese': 'j-pop',
+                            'chinese': 'c-pop',
+                            'russian': 'russian',
+                            'filipino': 'opm'
+                        }
+                        
+                        genre_key = script_to_genre.get(target_script)
+                        if genre_key and genre_key in KNOWN_ARTISTS:
+                            for artist in KNOWN_ARTISTS[genre_key][:20]:
+                                artist_res = self.local.search(artist, type='track', limit=5)
+                                if artist_res['tracks']['items']:
+                                    for track in artist_res['tracks']['items']:
+                                        track_artist = track['artists'][0]['name'].lower()
+                                        artist_parts = [p.strip() for p in track_artist.replace(',', ';').split(';')]
+                                        if any(artist.lower() == part or artist.lower() in part.split() for part in artist_parts):
+                                            artist_tracks.append(track)
+                        
+                        # Combine both methods
+                        seen_ids = set()
+                        for track in script_tracks + artist_tracks:
+                            if track['id'] not in seen_ids:
+                                seen_ids.add(track['id'])
+                                genre_tracks.append(track)
+                    
+                    # If we found genre tracks, apply mood filtering if needed
+                    if genre_tracks and mood_features:
+                        # Get track IDs
+                        track_ids = [t['id'] for t in genre_tracks]
+                        df = self.local.df
+                        genre_df = df[df['track_id'].isin(track_ids)]
+                        
+                        # Apply mood-based audio feature filters
+                        for feature, (min_val, max_val) in mood_features.items():
+                            if feature in genre_df.columns:
+                                genre_df = genre_df[(genre_df[feature] >= min_val) & (genre_df[feature] <= max_val)]
+                        
+                        if not genre_df.empty:
+                            sample = genre_df.sample(n=min(limit * 10, len(genre_df)))
+                            recs = self.local._to_spotify_format(sample)
+                            msg = f"🎵 Here are some {search_query} tracks I found for you:"
+                        elif genre_tracks:
+                            # No tracks match mood, return genre tracks anyway
+                            recs = genre_tracks[:limit * 10]
+                            msg = f"🎵 Here are some {detected_genre} tracks (couldn't find specific '{detected_mood}' matches):"
+                    elif genre_tracks:
+                        # No mood specified, just return genre tracks
+                        recs = genre_tracks[:limit * 10]
+                        msg = f"🎵 Here are some {search_query} tracks I found for you:"
+                
+                # If no genre detected, try mood-only filtering
+                elif mood_features:
+                    filtered_df = self.local.df.copy()
+                    for feature, (min_val, max_val) in mood_features.items():
+                        filtered_df = filtered_df[(filtered_df[feature] >= min_val) & (filtered_df[feature] <= max_val)]
+                    
+                    if not filtered_df.empty:
+                        sample = filtered_df.sample(n=min(limit * 10, len(filtered_df)))
+                        recs = self.local._to_spotify_format(sample)
+                        msg = f"🎵 Here are some {search_query} tracks I found for you:"
             
             # --- NEW: Filter by Artist if provided ---
             if seed_artist:
@@ -847,11 +991,29 @@ class ChatBot:
             # No results found - provide helpful message
             if search_query or target_genre:
                 query_term = search_query or target_genre
+                query_lower = query_term.lower()
                 
-                # Special message for culture-specific genres
-                if target_genre in ['opm', 'k-pop', 'j-pop']:
-                    genre_names = {'opm': 'OPM/Filipino', 'k-pop': 'K-pop', 'j-pop': 'J-pop'}
-                    return f"I don't have any {genre_names.get(target_genre, target_genre)} artists in my collection yet. 😔 Try asking for pop, rock, hip-hop, or jazz instead!", []
+                # Special message for culture-specific genres (check both target_genre and search_query)
+                genre_keywords = {
+                    'k-pop': 'K-pop',
+                    'kpop': 'K-pop',
+                    'korean': 'K-pop',
+                    'j-pop': 'J-pop',
+                    'jpop': 'J-pop',
+                    'japanese': 'J-pop',
+                    'opm': 'OPM/Filipino',
+                    'filipino': 'OPM/Filipino',
+                    'tagalog': 'OPM/Filipino'
+                }
+                
+                detected_genre_name = None
+                for keyword, genre_name in genre_keywords.items():
+                    if keyword in query_lower:
+                        detected_genre_name = genre_name
+                        break
+                
+                if detected_genre_name:
+                    return f"I don't have any {detected_genre_name} tracks matching your request in my collection yet. 😔 Try asking for pop, rock, hip-hop, or jazz instead!", []
                 
                 return f"Sorry, I don't have any '{query_term}' songs right now. 😕 Want to try a different genre or mood? I've got pop, rock, k-pop, jazz, and more!", []
             return msg, []
@@ -979,15 +1141,31 @@ class ChatBot:
             return "Local library not loaded yet.", []
         
         try:
+            # Check if playlist_name is a URL - extract ID if so
+            playlist_id = parse_playlist_id(playlist_name)
+            
             # Get user's playlists
             playlists = self.sp.get_user_playlists()
             
             # Find matching playlist
             target_playlist = None
-            for pl in playlists:
-                if playlist_name.lower() in pl['name'].lower() or playlist_name == pl['id']:
-                    target_playlist = pl
-                    break
+            
+            # If we extracted a valid ID from URL, try to get that playlist directly
+            if playlist_id and playlist_id != playlist_name:  # Only if parse_playlist_id actually extracted an ID
+                try:
+                    # Try to get the playlist by ID
+                    pl_info = self.sp.sp.playlist(playlist_id, fields='id,name,tracks')
+                    target_playlist = {'id': pl_info['id'], 'name': pl_info['name']}
+                except Exception as e:
+                    print(f"DEBUG: Failed to get playlist by ID: {e}")
+                    pass  # If it fails, fall back to searching user's playlists
+            
+            # If not found by ID, search by name in user's playlists
+            if not target_playlist:
+                for pl in playlists:
+                    if playlist_name.lower() in pl['name'].lower():
+                        target_playlist = pl
+                        break
             
             if not target_playlist:
                 return f"Playlist '{playlist_name}' not found. Use 'show my playlists' to see available playlists.", []
@@ -1001,12 +1179,63 @@ class ChatBot:
             # Analyze tracks (get average audio features)
             track_names = [f"{t['name']} by {t['artists'][0]['name']}" for t in tracks[:5]]
             
-            # Use first track as seed for recommendations
-            seed_track = f"{tracks[0]['name']} {tracks[0]['artists'][0]['name']}"
+            # Try to get recommendations using multiple approaches
+            results = []
             
-            # Get recommendations
-            search_results = self.local.search(seed_track, type='track', limit=10)
-            results = search_results.get('tracks', {}).get('items', [])
+            # Approach 1: Analyze audio features from playlist
+            # Get audio features for playlist tracks from local library
+            playlist_track_ids = []
+            for track in tracks[:10]:  # Analyze first 10 tracks
+                # Search for track in local library to get its ID
+                search_query = f"{track['name']} {track['artists'][0]['name']}"
+                search_results = self.local.search(search_query, type='track', limit=1)
+                found_tracks = search_results.get('tracks', {}).get('items', [])
+                if found_tracks:
+                    playlist_track_ids.append(found_tracks[0]['id'])
+            
+            # If we found tracks in local library, use audio features for recommendations
+            if playlist_track_ids:
+                # Get recommendations based on audio features
+                rec_results = self.local.get_recommendations(seed_tracks=playlist_track_ids[:5], limit=10)
+                results = rec_results.get('tracks', [])
+            
+            # Approach 2: If no results from audio features, try artist-based recommendations
+            if not results:
+                # Get unique artists from playlist
+                artists = list(set([track['artists'][0]['name'] for track in tracks[:10]]))
+                
+                # Search for tracks by these artists
+                for artist in artists[:3]:  # Limit to 3 artists
+                    artist_results = self.local.search(artist, type='track', limit=5)
+                    artist_tracks = artist_results.get('tracks', {}).get('items', [])
+                    results.extend(artist_tracks)
+                    if len(results) >= 10:
+                        break
+                
+                # Remove duplicates
+                seen_ids = set()
+                unique_results = []
+                for track in results:
+                    if track['id'] not in seen_ids:
+                        seen_ids.add(track['id'])
+                        unique_results.append(track)
+                results = unique_results[:10]
+            
+            # Approach 3: If still no results, try genre-based recommendations
+            if not results:
+                # Get genres from playlist tracks (if available in local library)
+                genres = []
+                for track_id in playlist_track_ids[:5]:
+                    track_row = self.local.df[self.local.df['track_id'] == track_id]
+                    if not track_row.empty and 'playlist_genre' in track_row.columns:
+                        genre = track_row.iloc[0]['playlist_genre']
+                        if genre and genre not in genres:
+                            genres.append(genre)
+                
+                # Get recommendations by genre
+                if genres:
+                    genre_results = self.local.get_recommendations(seed_genres=[genres[0]], limit=10)
+                    results = genre_results.get('tracks', [])
 
             if not results:
                 return f"Couldn't find similar songs to your playlist.", []

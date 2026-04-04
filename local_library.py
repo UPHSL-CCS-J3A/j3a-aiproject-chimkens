@@ -116,42 +116,44 @@ class LocalMusicLibrary:
             
             # Try loading Parquet files first
             for pf, cf in zip(parquet_files, csv_files):
+                df_loaded = None
                 if os.path.exists(pf):
                     print(f"Loading {pf}... (Parquet)")
-                    dfs.append(pd.read_parquet(pf))
+                    df_loaded = pd.read_parquet(pf)
                 elif os.path.exists(cf):
                     print(f"Loading {cf}... (CSV - consider converting to Parquet)")
-                    dfs.append(pd.read_csv(cf))
+                    df_loaded = pd.read_csv(cf)
+                
+                if df_loaded is not None:
+                    # Normalize column names BEFORE concatenating to prevent NaN issues
+                    # Handle track_genre -> playlist_genre mapping
+                    if 'track_genre' in df_loaded.columns and 'playlist_genre' not in df_loaded.columns:
+                        df_loaded.rename(columns={'track_genre': 'playlist_genre'}, inplace=True)
+                    elif 'track_genre' in df_loaded.columns and 'playlist_genre' in df_loaded.columns:
+                        df_loaded['playlist_genre'] = df_loaded['playlist_genre'].fillna(df_loaded['track_genre'])
+                        df_loaded.drop(columns=['track_genre'], inplace=True)
+                    
+                    # Handle artists -> track_artist mapping
+                    if 'artists' in df_loaded.columns and 'track_artist' not in df_loaded.columns:
+                        df_loaded.rename(columns={'artists': 'track_artist'}, inplace=True)
+                    elif 'artists' in df_loaded.columns and 'track_artist' in df_loaded.columns:
+                        df_loaded['track_artist'] = df_loaded['track_artist'].fillna(df_loaded['artists'])
+                        df_loaded.drop(columns=['artists'], inplace=True)
+                    
+                    # Handle album_name -> track_album_name mapping
+                    if 'album_name' in df_loaded.columns and 'track_album_name' not in df_loaded.columns:
+                        df_loaded.rename(columns={'album_name': 'track_album_name'}, inplace=True)
+                    elif 'album_name' in df_loaded.columns and 'track_album_name' in df_loaded.columns:
+                        df_loaded['track_album_name'] = df_loaded['track_album_name'].fillna(df_loaded['album_name'])
+                        df_loaded.drop(columns=['album_name'], inplace=True)
+                    
+                    dfs.append(df_loaded)
             
             if not dfs:
                 print("No Parquet or CSV datasets found.")
                 return
 
             self.df = pd.concat(dfs, ignore_index=True)
-            
-            # Normalize column names by coalescing
-            # Handle track_genre -> playlist_genre mapping
-            if 'track_genre' in self.df.columns and 'playlist_genre' in self.df.columns:
-                # Both exist: merge them (prefer playlist_genre, fill with track_genre)
-                self.df['playlist_genre'] = self.df['playlist_genre'].fillna(self.df['track_genre'])
-                self.df.drop(columns=['track_genre'], inplace=True)
-            elif 'track_genre' in self.df.columns:
-                # Only track_genre exists: rename it
-                self.df.rename(columns={'track_genre': 'playlist_genre'}, inplace=True)
-            
-            # Handle other mappings
-            col_mappings = {
-                'track_artist': 'artists',
-                'track_album_name': 'album_name'
-            }
-            
-            for target, source in col_mappings.items():
-                if source in self.df.columns:
-                    if target in self.df.columns:
-                        self.df[target] = self.df[target].fillna(self.df[source])
-                        self.df.drop(columns=[source], inplace=True)
-                    else:
-                        self.df.rename(columns={source: target}, inplace=True)
             
             # Fill text columns with empty string
             text_columns = ['track_name', 'track_artist', 'track_album_name', 'playlist_genre', 'playlist_name']
