@@ -114,7 +114,7 @@ These issues lead to reduced user engagement, missed discovery opportunities, an
 3. Make sure you have placed the necessary `high_popularity_spotify_data.parquet`, `low_popularity_spotify_data.parquet`, and `spotify_dataset.parquet` files into the `data/` directory.
 
 ### 3. Generate Semantic Embeddings (Recommended)
-Because the `embeddings.pkl` file is extremely large (preventing it from being uploaded to GitHub), you will need to generate it locally if you want access to advanced semantic search (e.g., searching for "sad breakup songs").
+Because the `embeddings.pkl` file is extremely large (preventing it from being uploaded to GitHub), you will need to generate it locally if you want access to advanced semantic search (searching for "sad breakup songs").
 If you chose to skip this step, the application will still launch but will fall back to exact-text and audio-feature matching.
 
 To generate the dataset embeddings locally, run:
