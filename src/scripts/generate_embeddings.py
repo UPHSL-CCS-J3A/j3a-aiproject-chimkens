@@ -21,12 +21,18 @@ print("Loading sentence transformer model...")
 # Using a lightweight, fast model that works offline
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
+import os
+
+# Resolve root data directory robustly
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+data_dir = os.path.join(root_dir, 'data')
+
 print("Loading datasets...")
-# Load all CSV files from datasets folder
+# Load all CSV files from data folder
 dataset_files = [
-    '../data/high_popularity_spotify_data.csv',
-    '../data/low_popularity_spotify_data.csv',
-    '../data/spotify_dataset.csv'
+    os.path.join(data_dir, 'high_popularity_spotify_data.csv'),
+    os.path.join(data_dir, 'low_popularity_spotify_data.csv'),
+    os.path.join(data_dir, 'spotify_dataset.csv')
 ]
 
 dfs = []
@@ -39,7 +45,7 @@ for file in dataset_files:
         print(f"  Warning: {file} not found, skipping...")
 
 if not dfs:
-    print("ERROR: No datasets found! Make sure CSV files are in the '../data/' folder.")
+    print(f"ERROR: No datasets found! Make sure CSV files are in the {data_dir} folder.")
     exit(1)
 
 # Combine all datasets
@@ -268,7 +274,7 @@ output_data = {
     'audio_weight': audio_weight
 }
 
-output_file = '../data/embeddings.pkl'
+output_file = os.path.join(data_dir, 'embeddings.pkl')
 print(f"\nSaving embeddings to {output_file}...")
 with open(output_file, 'wb') as f:
     pickle.dump(output_data, f)
